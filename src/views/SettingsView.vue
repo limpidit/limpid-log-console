@@ -34,6 +34,10 @@
             <label class="text-xs text-gray-500 block mb-1">Email expéditeur</label>
             <input v-model="newClient.sender_email" placeholder="contact@client.fr" type="email" class="input" />
           </div>
+          <div>
+            <label class="text-xs text-gray-500 block mb-1">Seuil silence (heures)</label>
+            <input v-model.number="newClient.expected_log_hours" type="number" min="1" max="168" class="input" />
+          </div>
         </div>
         <div class="flex gap-2">
           <button @click="createClient" :disabled="!newClient.db_name"
@@ -242,7 +246,7 @@ const showNewUser = ref(false)
 const createdKey = ref(null)
 const copied = ref(false)
 
-const newClient = reactive({ db_name: '', display_name: '', ebp_file: '', sender_email: '' })
+const newClient = reactive({ db_name: '', display_name: '', ebp_file: '', sender_email: '', expected_log_hours: 24 })
 const newKey = reactive({ client_id: '', name: '' })
 const newUser = reactive({ email: '', name: '', password: '' })
 
@@ -258,9 +262,9 @@ const clientMap = computed(() => {
 
 async function load() {
   const [c, k, u] = await Promise.all([
-    api.get('/admin/clients'),
-    api.get('/admin/api-keys'),
-    api.get('/admin/users'),
+    api.get('/admin/clients').catch(() => ({ data: [] })),
+    api.get('/admin/api-keys').catch(() => ({ data: [] })),
+    api.get('/admin/users').catch(e => { console.error('users', e); return { data: [] } }),
   ])
   clients.value = c.data
   apiKeys.value = k.data
@@ -271,7 +275,7 @@ async function createClient() {
   clientError.value = ''
   try {
     await api.post('/admin/clients', newClient)
-    Object.assign(newClient, { db_name: '', display_name: '', ebp_file: '', sender_email: '' })
+    Object.assign(newClient, { db_name: '', display_name: '', ebp_file: '', sender_email: '', expected_log_hours: 24 })
     showNewClient.value = false
     await load()
   } catch (e) {
