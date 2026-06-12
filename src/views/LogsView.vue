@@ -7,6 +7,13 @@
         <div class="flex items-center gap-2 text-xs text-gray-500">
           <span>{{ total.toLocaleString('fr-FR') }} résultats</span>
           <button
+            v-if="hasActiveFilters && total > 0"
+            @click="deleteBulk"
+            class="px-2.5 py-1 bg-red-900/40 hover:bg-red-900/70 border border-red-800/40 rounded text-red-400 hover:text-red-300 transition-colors"
+          >
+            🗑 Supprimer les {{ total.toLocaleString('fr-FR') }} résultats
+          </button>
+          <button
             @click="load"
             class="px-2.5 py-1 bg-gray-800 hover:bg-gray-700 rounded text-gray-400 hover:text-white transition-colors"
           >
@@ -99,6 +106,7 @@
           :key="entry.id"
           :entry="entry"
           :client-name="clientMap[entry.client_id]"
+          @delete="deleteOne"
         />
 
         <!-- Load more -->
@@ -204,6 +212,34 @@ async function loadClients() {
     const { data } = await api.get('/admin/clients')
     clients.value = data
   } catch {}
+}
+
+async function deleteOne(id) {
+  try {
+    await api.delete(`/logs/${id}`)
+    entries.value = entries.value.filter(e => e.id !== id)
+    total.value = Math.max(0, total.value - 1)
+  } catch (e) {
+    console.error('deleteOne', e)
+  }
+}
+
+async function deleteBulk() {
+  const msg = `Supprimer ${total.value.toLocaleString('fr-FR')} logs ?\n\nCette action est irréversible.`
+  if (!confirm(msg)) return
+
+  const params = {}
+  if (filters.client_id) params.client_id = filters.client_id
+  if (filters.level) params.level = filters.level
+  if (filters.date_from) params.date_from = new Date(filters.date_from).toISOString()
+  if (filters.date_to) params.date_to = new Date(filters.date_to).toISOString()
+
+  try {
+    const { data } = await api.delete('/logs', { params })
+    resetAndLoad()
+  } catch (e) {
+    alert(e.response?.data?.detail || 'Erreur lors de la suppression')
+  }
 }
 
 onMounted(() => {

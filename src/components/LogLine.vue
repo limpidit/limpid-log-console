@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex items-start gap-3 px-4 py-1.5 border-b border-gray-800/40 hover:bg-gray-800/20 transition-colors"
+    class="group flex items-start gap-3 px-4 py-1.5 border-b border-gray-800/40 hover:bg-gray-800/20 transition-colors"
     :class="rowClass"
   >
     <!-- Level badge -->
@@ -20,6 +20,15 @@
 
     <!-- Message -->
     <span class="flex-1 min-w-0 break-all" :class="messageClass">{{ entry.message }}</span>
+
+    <!-- Delete button (visible on hover) -->
+    <button
+      @click.stop="$emit('delete', entry.id)"
+      class="shrink-0 opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-500 transition-all text-xs px-1"
+      title="Supprimer ce log"
+    >
+      ✕
+    </button>
   </div>
 </template>
 
@@ -30,6 +39,8 @@ const props = defineProps({
   entry: Object,
   clientName: String,
 })
+
+defineEmits(['delete'])
 
 const levelConfig = {
   error:   { dot: 'bg-red-500',    label: 'ERREUR',   row: 'bg-red-950/10',     msg: 'text-red-400',    lbl: 'text-red-500' },

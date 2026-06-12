@@ -60,17 +60,26 @@
               <th class="px-4 py-2.5 text-left font-medium text-gray-500">Nom affiché</th>
               <th class="px-4 py-2.5 text-left font-medium text-gray-500">Fichier EBP</th>
               <th class="px-4 py-2.5 text-left font-medium text-gray-500">Email</th>
+              <th class="px-4 py-2.5 text-right font-medium text-gray-500">Action</th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="!clients.length">
-              <td colspan="4" class="px-4 py-6 text-center text-gray-500">Aucun client</td>
+              <td colspan="5" class="px-4 py-6 text-center text-gray-500">Aucun client</td>
             </tr>
             <tr v-for="c in clients" :key="c.id" class="border-b border-gray-800/50">
               <td class="px-4 py-2.5 font-mono text-gray-300">{{ c.db_name }}</td>
               <td class="px-4 py-2.5 text-gray-400">{{ c.display_name || '—' }}</td>
               <td class="px-4 py-2.5 text-gray-500">{{ c.ebp_file || '—' }}</td>
               <td class="px-4 py-2.5 text-gray-500">{{ c.sender_email || '—' }}</td>
+              <td class="px-4 py-2.5 text-right">
+                <button
+                  @click="deleteClient(c)"
+                  class="text-xs text-red-500 hover:text-red-400 transition-colors"
+                >
+                  Supprimer
+                </button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -293,6 +302,16 @@ async function createApiKey() {
     await load()
   } catch (e) {
     keyError.value = e.response?.data?.detail || 'Erreur'
+  }
+}
+
+async function deleteClient(c) {
+  if (!confirm(`Supprimer le client "${c.display_name || c.db_name}" ?\n\nCela supprimera TOUTES ses sessions et logs. Cette action est irréversible.`)) return
+  try {
+    await api.delete(`/admin/clients/${c.id}`)
+    await load()
+  } catch (e) {
+    alert(e.response?.data?.detail || 'Erreur lors de la suppression')
   }
 }
 
